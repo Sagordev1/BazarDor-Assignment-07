@@ -53,6 +53,29 @@ const first = (o: any, keys: string[]) => {
   return undefined;
 };
 
+/** scan every key of the raw object: first numeric-looking value whose key matches `re` (and not `not`) */
+const scan = (o: any, re: RegExp, not?: RegExp): number | undefined => {
+  if (!o || typeof o !== "object") return undefined;
+  for (const [k, v] of Object.entries(o)) {
+    if (!re.test(k) || (not && not.test(k))) continue;
+    if (typeof v === "number" || (typeof v === "string" && /\d|[০-৯]/.test(v))) return toNum(v);
+  }
+  return undefined;
+};
+
+const UNIT_BN: Record<string, string> = {
+  kg: "প্রতি কেজি", kilogram: "প্রতি কেজি", "কেজি": "প্রতি কেজি",
+  l: "প্রতি লিটার", ltr: "প্রতি লিটার", litre: "প্রতি লিটার", liter: "প্রতি লিটার", "লিটার": "প্রতি লিটার",
+  dozen: "প্রতি ডজন", dz: "প্রতি ডজন", "ডজন": "প্রতি ডজন",
+  piece: "প্রতি পিস", pcs: "প্রতি পিস", pc: "প্রতি পিস", "পিস": "প্রতি পিস",
+  g: "প্রতি গ্রাম", gm: "প্রতি গ্রাম", gram: "প্রতি গ্রাম", hali: "প্রতি হালি", "হালি": "প্রতি হালি",
+};
+const unitBn = (u: string) => {
+  const t = u.trim();
+  if (t.startsWith("প্রতি")) return t;
+  return UNIT_BN[t.toLowerCase()] ?? `প্রতি ${t}`;
+};
+
 const CAT_EMOJI: Record<string, string> = {
   chal: "🍚", dal: "🫘", tel: "🫙", sobji: "🥬", sabji: "🥬", mach: "🐟", mangsho: "🍗", mangsh: "🍗", dim: "🥛", "dim-dudh": "🥛", moshla: "🌶️", mosla: "🌶️",
 };
@@ -87,14 +110,25 @@ export function normalizeProduct(r: any, cats: Category[] = []): Product {
   const catId = String(typeof rawCat === "object" && rawCat ? first(rawCat, ["id", "slug"]) : rawCat ?? "");
   const cat = cats.find((c) => c.id === catId);
 
-  const price = toNum(first(r, ["price", "currentPrice", "todayPrice", "today", "avgPrice", "avg", "average"]));
-  let change = toNum(first(r, ["change", "changePercent", "percentChange", "change_percent", "changePct", "pct", "percent"]));
-  const trend = String(first(r, ["trend", "direction"]) ?? "").toLowerCase();
-  if (trend === "down" || trend === "fall") change = -Math.abs(change);
-  if (trend === "up" || trend === "rise") change = Math.abs(change);
+  const price = toNum(first(r, ["price", "currentPrice", "current_price", "todayPrice", "today_price", "today", "avgPrice", "avg", "average"]) ?? scan(r, /price|দাম/i, /prev|yest|old|last|min|max/i));
 
-  const prevRaw = first(r, ["previous", "previousPrice", "yesterday", "yesterdayPrice", "prevPrice"]);
-  const previous = prevRaw !== undefined ? toNum(prevRaw) : change ? price / (1 + change / 100) : price;
+  // previous (yesterday) price, any key name
+  const prevScan = scan(r, /(prev|yest|old|last|গতকাল)/i);
+  const prevRaw = first(r, ["previous", "previousPrice", "previous_price", "yesterday", "yesterdayPrice", "yesterday_price", "prevPrice", "prev_price"]);
+  let previous = prevRaw !== undefined ? toNum(prevRaw) : prevScan !== undefined ? prevScan : 0;
+
+  // percent change: explicit percent key -> else computed from previous -> else generic "change/delta/diff" key
+  let change: number | undefined = scan(r, /(percent|pct|%)/i);
+  if (change === undefined && previous > 0 && price > 0) change = ((price - previous) / previous) * 100;
+  if (change === undefined) {
+    const g = scan(r, /(change|chg|delta|diff|variation|trend|movement)/i);
+    if (g !== undefined) change = g;
+  }
+  change = change ?? 0;
+  const dir = String(first(r, ["trend", "direction", "status", "movement", "change_type", "changeType"]) ?? "").toLowerCase();
+  if (/down|fall|decrease|drop|কম/.test(dir)) change = -Math.abs(change);
+  else if (/up|rise|increase|high|বাড়/.test(dir)) change = Math.abs(change);
+  if (!previous) previous = change ? price / (1 + change / 100) : price;
 
   const rawMarkets = first(r, ["markets", "bazars", "bazaars", "marketPrices", "market_prices", "prices"]);
   const markets: Market[] = Array.isArray(rawMarkets) ? rawMarkets.map(normalizeMarket) : [];
@@ -116,7 +150,7 @@ export function normalizeProduct(r: any, cats: Category[] = []): Product {
   return {
     id: String(first(r, ["id", "_id", "slug"]) ?? ""),
     name: String(first(r, ["name_bn", "nameBn", "name", "title"]) ?? ""),
-    unit: String(first(r, ["unit", "unitBn", "unit_bn"]) ?? "প্রতি কেজি"),
+    unit: unitBn(String(first(r, ["unit_bn", "unitBn", "unit", "uom"]) ?? "কেজি")),
     emoji: String(first(r, ["emoji", "icon", "image"]) ?? cat?.emoji ?? catEmoji(catId)),
     price,
     change,
