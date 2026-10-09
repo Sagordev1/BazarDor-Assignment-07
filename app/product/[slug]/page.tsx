@@ -1,3 +1,5 @@
+
+import { bnPrice, bnPct } from "@/lib/format";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import ChangeBadge from "@/components/ChangeBadge";
@@ -14,11 +16,11 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
   const unitShort = p.unit.replace("প্রতি ", "");
   const diff = Math.round(Math.abs(p.price - p.previous));
-  const note = p.description || (p.change > 0
-    ? `গতকালের তুলনায় আজ দাম বেড়েছে · ${bnPrice(diff)} টাকা`
-    : p.change < 0
-      ? `গতকালের তুলনায় আজ দাম কমেছে · ${bnPrice(diff)} টাকা`
-      : "গতকালের তুলনায় দাম অপরিবর্তিত");
+ const note = p.description || (p.change > 0
+  ? `গতকালের তুলনায় আজ দাম বেড়েছে · ${bnPct(p.change)}%`
+  : p.change < 0
+    ? `গতকালের তুলনায় আজ দাম কমেছে · ${bnPct(p.change)}%`
+    : "গতকালের তুলনায় দাম অপরিবর্তিত");
 
   const tone = p.change > 0 ? "text-error" : p.change < 0 ? "text-success" : "";
 
