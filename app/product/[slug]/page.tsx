@@ -1,10 +1,8 @@
-
-import { bnPrice, bnPct } from "@/lib/format";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import ChangeBadge from "@/components/ChangeBadge";
 import { getProduct } from "@/lib/data";
-import { bnPrice } from "@/lib/format";
+import { bnPrice, bnPct } from "@/lib/format";
 import { requireUser } from "@/lib/session";
 
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
