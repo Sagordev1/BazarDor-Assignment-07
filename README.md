@@ -32,11 +32,34 @@
 ---
 
 
+## 📁 Project Structure
+
+```
+├── app/
+│   ├── api/auth/[...all]/   # Better Auth handler
+│   ├── category/[slug]/     # Category page + loading skeleton
+│   ├── product/[slug]/      # Protected product details
+│   ├── profile/             # Profile + update route
+│   ├── signin/  signup/     # Auth pages
+│   ├── layout.tsx           # Navbar, ticker, footer, toaster
+│   ├── not-found.tsx        # 404 page
+│   └── page.tsx             # Home
+├── components/              # Navbar, Ticker, ProductCard, forms, skeletons…
+├── lib/
+│   ├── auth.ts              # Better Auth server config
+│   ├── auth-client.ts       # Better Auth client
+│   ├── data.ts              # API client + data normalization
+│   ├── format.ts            # Bengali numerals / date helpers
+│   └── session.ts           # Protected route helper
+└── public/                  # Logo & hero image
+```
+
+
 ### 3. Run
 ```bash
 npm run dev
 ```
-http://localhost:3000 এ ওপেন করো।
+http://localhost:3000 
 
 ### 4. Production build
 ```bash
