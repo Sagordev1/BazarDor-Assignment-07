@@ -31,6 +31,19 @@
 
 ---
 
+
+### 3. Run
+```bash
+npm run dev
+```
+http://localhost:3000 এ ওপেন করো।
+
+### 4. Production build
+```bash
+npm run build
+npm start
+```
+
 ## ✨ Key Features
 
 | # | Feature | Details |
@@ -42,6 +55,15 @@
 | 5 | 👤 **Auth & Profile Update** | Email/Password, Google ও GitHub login এবং প্রোফাইল থেকে নাম আপডেট |
 
 ---
+---
+
+## 👨‍💻 Author
+
+**Sagor Dev** — [@Sagordev1](https://github.com/Sagordev1)
+
+---
+
+
 
 <div align="center">
 
